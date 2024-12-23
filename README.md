@@ -44,7 +44,7 @@ function verifyCaptcha() {
 	}
 	
 	$chk		= hash( 'sha256', $nonce . $cnonce );
-	$chk		= preg_replace( '/[0oO1i=\/]/', '', base64_encode( $chk ) );
+	$chk		= preg_replace( '/[0oO1li=\/]/', '', base64_encode( $chk ) );
 	
 	if ( 0 == strcasecmp( substr( $chk, 0, 8 ), $captcha ) ) {
 		return true;
