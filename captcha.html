@@ -87,15 +87,15 @@ Click image to load a new CAPTCHA</p>
 		return hex;
 	}
 	
-	// Add a background graidents at a given number of stop indexes
-	function addGradients( stops, grad ) {
-		for ( let i = 0; i < stops; i++ ) {
+	// Add background graidents
+	function addGradients( grad ) {
+		for ( let i = 0; i < 10; i++ ) {
 			grad.addColorStop( 
-				i * 0.24, 
+				i * 0.1, 
 				`rgb(
-					${ Math.floor( 255 - Math.random() * 100 ) },
-					${ Math.floor( 255 - Math.random() * 100 ) },
-					${ Math.floor( 255 - Math.random() * 100 ) }, 
+					${ Math.floor( 255 - Math.random() * 80 ) },
+					${ Math.floor( 255 - Math.random() * 80 ) },
+					${ Math.floor( 255 - Math.random() * 80 ) }, 
 					1
 				)`
 			);
@@ -113,8 +113,8 @@ Click image to load a new CAPTCHA</p>
 		const grad	= 
 		ctx.createLinearGradient( 0, 0, canvas.width, canvas.height );
 		
-		// Add gradients at 4 steps
-		addGradients( 4, grad );
+		// Add gradients
+		addGradients( grad );
 		
 		ctx.fillStyle	= grad;
 		ctx.fillRect( 0, 0, canvas.width, canvas.height );
