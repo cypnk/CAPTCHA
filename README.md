@@ -15,10 +15,14 @@ The script requires a server-side nonce to be sent to the client via a hidden in
 
 Both the server-side and client-side nonces are hashed together to create a third random string, which shortened to 8 characters for the CAPTCHA.
 
-To verify the CAPTCHA, take the sent nonce and check it against the value stored in the visitor's session. And then combine the nonce and cnonce and use SHA-256 hash. Then take the first 8 characters to match the CAPTCHA input value. 
+To verify the CAPTCHA, take the sent nonce and check it against the value stored in the visitor's session. And then combine the nonce and cnonce and use SHA-256 hash. Then take the first 8 characters to match the CAPTCHA input value after base64 encoding the output and removing some characters which are easily confused with each other from the result. 
 ```
 // Example in PHP. Remember to sanitize in production.
 function verifyCaptcha() {
+	if ( session_status() === PHP_SESSION_NONE ) {
+		session_start();
+	}
+	
 	$nonce		= $_POST['nonce'] ?? '';
 	$snonce		= $_SESSION['nonce'] ?? '';
 	
@@ -40,6 +44,7 @@ function verifyCaptcha() {
 	}
 	
 	$chk		= substr( hash( 'sha256', $nonce . $cnonce ), 0, 8 );
+	$chk		= preg_replace( '/[0oO1i=\/]/', '', base64_encode( $chk ) );
 	if ( 0 == strcmp( $chk, $captcha ) ) {
 		return true;
 	}
