@@ -42,7 +42,7 @@ canvas {
 	title="Click to load a new CAPTCHA"></canvas><br />
 Click image to load a new CAPTCHA</p> 
 
-<p><input type="text" id="captcha" name="captcha"></p>
+<p><input type="text" id="captcha" name="captcha" required></p>
 <p><input type="submit" value="Post"></p>
 </form>
 
@@ -119,9 +119,15 @@ Click image to load a new CAPTCHA</p>
 		ctx.fillStyle	= grad;
 		ctx.fillRect( 0, 0, canvas.width, canvas.height );
 		
+		// Widen character range, remove confusing ones
+		txt		= 
+		window.btoa( txt )
+			.replace( /[0oO1i=\/]/g, '' )
+			.substring( 0, 8 );
+		
 		for ( let i = 0; i < txt.length; i++ ) {
 			// Random rotation angle +/- 45
-			const a	= ( Math.random() - 0.5 ) * Math.PI / 4;
+			const a	= ( Math.random() - 0.5 ) * ( Math.PI / 4 );
 			
 			// Random font size
 			const f	= Math.floor( 30 - ( Math.random() * 12 ) );
@@ -155,7 +161,7 @@ Click image to load a new CAPTCHA</p>
 			digest( n ).then( hash => {
 				cnonce.value = hash;
 				digest( nonce.value + hash ).then( cap => {
-					captcha( cap.substring( 0, 8 ) );
+					captcha( cap );
 				} );
 			} );
 		});
