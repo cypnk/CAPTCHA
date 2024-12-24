@@ -12,10 +12,11 @@ The script requires a server-side nonce to be sent to the client via a hidden in
 <input type="hidden" id="nonce" name="nonce" value="server-side-nonce"> <!-- Sent by the server -->
 <input type="hidden" id="cnonce" name="cnonce" value=""> <!-- Created by the script -->
 ```
+The HTML contains the ```<canvas id="captcha-img">``` element which is used to render the CAPTCHA image.
 
-Both the server-side and client-side nonces are hashed together to create a third random string, which shortened to 8 characters for the CAPTCHA.
+Both the server-side and client-side nonces are hashed together to create a third random string, which is base64 encoded and shortened to 8 characters, with some which are easily confused with each other removed, for the CAPTCHA.
 
-To verify the CAPTCHA, take the sent nonce and check it against the value stored in the visitor's session. And then combine the nonce and cnonce and use SHA-256 hash. Then take the first 8 characters to match the CAPTCHA input value after base64 encoding the output and removing some characters which are easily confused with each other from the result. 
+To verify the CAPTCHA, take the sent nonce and check it against the value stored in the visitor's session. Then combine the nonce and cnonce, in that order, and apply a SHA-256 hash. Finally, after base64 encoding the output and removing the same easily confused characters as in the JavaScript from the result, take the first 8 characters to match the CAPTCHA input value. 
 ```
 // Example in PHP. Remember to sanitize in production.
 function verifyCaptcha() {
