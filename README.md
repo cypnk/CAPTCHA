@@ -1,7 +1,7 @@
 # CAPTCHA
-Simple, client-side, CAPTCHA
+Simple, client-side, CAPTCHA generator
 
-This is a small snippet of JavaScript which generates a CAPTCHA image in a \<canvas\> HTML element, and uses the Crypto API, which is now widely available in most modern browsers. 
+This is a small snippet of JavaScript which generates a [CAPTCHA](https://en.wikipedia.org/wiki/CAPTCHA) image in a \<canvas\> HTML element using the Crypto API, which is now widely available in most modern browsers. 
 
 This is intended to be a minor speed-bump against some bots.
 
@@ -24,18 +24,24 @@ E.G.
 
 ```data-captcha``` Tells the script the \<canvas\> element will be generated here. ```data-width``` And ```data-height``` specify the width and height of the CAPTCHA image, while ```data-size``` is the number of characters to generate.
 
-Both the server-side and client-side nonces are hashed together to create a third random string, which is base64 encoded and shortened to 8 characters, with some which are easily confused with each other removed, for the CAPTCHA.
+Order of operations:
+* SHA-256 hash nonce + cnonce 
+* Base64 encode result
+* Remove potentially confusing/invalid characters: 0, o, O, 1, l, i, N, z, Z, 2, m, 3, =, /
+* Shorten to 8 characters (default length, can be increased or decreased)
 
-To verify the CAPTCHA, take the sent nonce and check it against the value stored in the visitor's session. Then combine the nonce and cnonce, in that order, and apply a SHA-256 hash. Finally, after base64 encoding the output and removing the same easily confused characters as in the JavaScript from the result, take the first 8 characters to match the CAPTCHA input value. 
+To verify the CAPTCHA, take the sent nonce and check it against the value stored in the visitor's session first. Then follow the same order of operation using your server-side language of choice. Abbreviated PHP and Perl examples are provided here. In both examples, $snonce is the server-generated, session-stored value. Get $nonce, $cnonce, and $captcha from user form data.
 
-Example usage in PHP Remember to sanitize in production.
+Example usage in PHP. Remember to sanitize in production:
 ```
+# Constants in use
+define( 'CAPTCHA_SIZE',	8 );	// Must match client-side JavaScript
+define( 'NONCE_SIZE',	64 );	// Default SHA-256 output size
+
 // Get your $snonce from session data
-function validateCaptcha( $snonce ) {
-	$nonce		= $_POST['nonce'] ?? '';
-	$cnonce		= $_POST['cnonce'] ?? '';
-	$captcha	= $_POST['captcha'] ?? '';
+function validateCaptcha( $snonce, $nonce, $cnonce, $captcha ) {
 	
+	// Anything missing? Fail early
 	if ( empty( $nonce ) || empty( $cnonce ) || empty( $captcha ) ) {
 		return false;
 	}
@@ -50,14 +56,14 @@ function validateCaptcha( $snonce ) {
 		CAPTCHA_SIZE	!= strlen( $captcha )	|| 
 		NONCE_SIZE	!= strlen( $cnonce ) 
 	) {
-		return 0;
+		return false;
 	}
 	
 	// Create a hash with nonce and cnonce and widen character set
-	$chk		= hash( 'sha256', $nonce . $cnonce );
+	$chk		= base64_encode( hash( 'sha256', $nonce . $cnonce ) );
 	
 	// Remove confusing characters (must match client-side code)
-	$chk		= preg_replace( '/[0oO1liNzZ2m3=\/]/', '', base64_encode( $chk ) );
+	$chk		= preg_replace( '/[0oO1liNzZ2m3=\/]/', '', $chk );
 	
 	// Limit to CAPTCHA length (must match client-side code)
 	if ( 0 == strcasecmp( substr( $chk, 0, CAPTCHA_SIZE ), $captcha ) ) {
@@ -67,26 +73,32 @@ function validateCaptcha( $snonce ) {
 	return false; // Default to fail
 }
 ```
-Example usage in Perl. ```formData``` Is a placeholder helper. Use your own user input filter.
 
+Example usage in Perl:
 ```
+# Required modules
+use MIME::Base64;
+use Digest::SHA qw( sha256_hex );
+
+# Constants in use
+use constant {
+	CAPTCHA_SIZE		=> 8,	# Must match client-side JavaScript
+	NONCE_SIZE		=> 64	# Default SHA-256 output size
+};
+
 sub validateCaptcha {
-	my ( $snonce )	= @_;
+	my ( $snonce, $nonce, $cnonce, $captcha )	= @_;
 	
-	my %data	= formData();
+	# Anything missing? Fail early
 	if ( 
-		!defined( $data->{nonce} )	|| 
-		!defined( $data->{cnonce} )	|| 
-		!defined( $data->{captcha} )
+		( !defined $nonce || $nonce eq '' )	|| 
+		( !defined $cnonce || $cnonce eq '' )	|| 
+		( !defined $captcha || $captcha eq '' )	||
 	) {
 		return 0;
 	}
 	
-	my ( $nonce, $cnonce, $captcha ) = ( 
-		$data->{nonce}, $data->{cnonce}, $data->{captcha} 
-	);
-	
-	// Match session stored nonce with form nonce
+	# Match session stored nonce with form nonce
 	if ( $snonce ne $nonce ) {
 		return 0;
 	}
