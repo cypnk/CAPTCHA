@@ -19,12 +19,9 @@ button, input:is([type="submit"], [type="button"]) {
 	padding: 0.2rem 1rem;
 }
 
-canvas {
-	vertical-align: middle;
-}
-
-#captcha-img {
+canvas[rel="captcha"] {
 	cursor: pointer;
+	vertical-align: middle;
 }
 
 * + p {
@@ -225,6 +222,7 @@ Click image to load a new CAPTCHA</p>
 		canvas.setAttribute( 'height', 
 			place.getAttribute( 'data-height' )	|| 45 
 		);
+		canvas.setAttribute( 'rel', 'captcha' );
 		place.parentNode.insertBefore( canvas, place );
 	}
 	
